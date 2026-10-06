@@ -3,7 +3,7 @@ version: '3.8'
 services:
   base: &base
     build:
-      context: https://github.com/kindiyanuar/chatwoot.git#develop
+      context: .
       dockerfile: docker/Dockerfile
     env_file: .env
     environment:
