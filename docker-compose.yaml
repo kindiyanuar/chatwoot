@@ -1,36 +1,41 @@
 version: '3.8'
 
 services:
-  base: &base
+  rails:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    env_file: .env
+    restart: always
+    command: ["sh", "-c", "bundle exec rails db:chatwoot_prepare && bundle exec rails s -p 3000 -b '0.0.0.0'"]
+    expose:
+      - 3000
     environment:
       - RAILS_ENV=production
       - NODE_ENV=production
       - INSTALLATION_ENV=docker
-      - FRONTEND_URL=https://chat.luthfibarnik.com
+      - VIRTUAL_HOST=chat.luthfibarnik.com
+      - VIRTUAL_PORT=3000
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
 
-  rails:
-    <<: *base
-    restart: always
-    command: ["sh", "-c", "bundle exec rails db:chatwoot_prepare && bundle exec rails s -p 3000 -b '0.0.0.0'"]
-    expose:
-      - 3000
-    environment:
-      - VIRTUAL_HOST=chat.luthfibarnik.com
-      - VIRTUAL_PORT=3000
-
   sidekiq:
-    <<: *base
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
     restart: always
     command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+    environment:
+      - RAILS_ENV=production
+      - NODE_ENV=production
+      - INSTALLATION_ENV=docker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   postgres:
     image: postgres:15-alpine
