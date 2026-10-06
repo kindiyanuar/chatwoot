@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+    image: chatwoot-custom-local:latest
     restart: always
     command: ["sh", "-c", "bundle exec rails db:chatwoot_prepare && bundle exec rails s -p 3000 -b '0.0.0.0'"]
     expose:
@@ -22,9 +23,7 @@ services:
         condition: service_healthy
 
   sidekiq:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
+    image: chatwoot-custom-local:latest
     restart: always
     command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
     environment:
@@ -32,6 +31,8 @@ services:
       - NODE_ENV=production
       - INSTALLATION_ENV=docker
     depends_on:
+      rails:
+        condition: service_started
       postgres:
         condition: service_healthy
       redis:
