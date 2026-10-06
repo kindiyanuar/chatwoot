@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  base: &base
+    build:
+      context: https://github.com/kindiyanuar/chatwoot.git#develop # Ganti 'develop' atau 'master' sesuai default branch repo Anda
+      dockerfile: docker/Dockerfile
+    env_file: .env
+    environment:
+      - RAILS_ENV=production
+      - NODE_ENV=production
+      - INSTALLATION_ENV=docker
+      - FRONTEND_URL=https://chat.luthfibarnik.com
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  rails:
+    <<: *base
+    restart: always
+    command: ["sh", "-c", "bundle exec rails db:chatwoot_prepare && bundle exec rails s -p 3000 -b '0.0.0.0'"]
+    expose:
+      - 3000
+    environment:
+      - VIRTUAL_HOST=chat.luthfibarnik.com
+      - VIRTUAL_PORT=3000
+
+  sidekiq:
+    <<: *base
+    restart: always
+    command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+
+  postgres:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DATABASE:-chatwoot_production}
+      POSTGRES_USER: ${POSTGRES_USERNAME:-chatwoot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chatwoot_secure_pass}
+    volumes:
+      - chatwoot_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USERNAME:-chatwoot} -d ${POSTGRES_DATABASE:-chatwoot_production}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:-redis_secure_pass}"]
+    volumes:
+      - chatwoot_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_secure_pass}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  chatwoot_postgres_data:
+  chatwoot_redis_data:
