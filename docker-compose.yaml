@@ -27,7 +27,7 @@ services:
       - chatwoot_storage:/app/storage
 
   postgres:
-  image: pgvector/pgvector:pg15
+    image: pgvector/pgvector:pg15
     restart: always
     environment:
       - POSTGRES_DB=${POSTGRES_DATABASE:-chatwoot_production}
