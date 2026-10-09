@@ -11,7 +11,7 @@ services:
     ports:
       - '3000:3000'
     entrypoint: docker/entrypoints/rails.sh
-    command: ['bundle', 'exec', 'rails', 's', '-p', '3000', '-b', '0.0.0.0']
+    command: ['sleep', 'infinity']
     volumes:
       - chatwoot_storage:/app/storage
 
@@ -22,7 +22,7 @@ services:
     depends_on:
       - postgres
       - redis
-    command: ['bundle', 'exec', 'sidekiq', '-C', 'config/sidekiq.yml']
+    command: ['sleep', 'infinity']
     volumes:
       - chatwoot_storage:/app/storage
 
